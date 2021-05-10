@@ -3,7 +3,7 @@
 import re
 
 # print the sides of congruent numbers from lo to hi, inclusive
-def compute_sides(lo, hi, cur_lim = 12, heegner = True):
+def compute_sides(lo, hi, init_second_lim = 12, heegner = True):
     todo = [False]*(hi+1)
     for i in range(lo, hi+1):
         if (squarefree(i) == 1):
@@ -11,16 +11,16 @@ def compute_sides(lo, hi, cur_lim = 12, heegner = True):
                todo[i] = True
 
     while sum(todo) > 0:
-      print('*** cur_lim=', cur_lim, ' ', sum(todo), 'left to do', flush = True)
+      print('*** second_lim=', init_second_lim, ' ', sum(todo), 'left to do', flush = True)
       print([i for i in range(len(todo)) if todo[i]])
       for i in range(lo, hi+1):
          if todo[i]:
-           x = compute_sides_one(i, cur_lim, heegner)
+           x = compute_sides_one(i, init_second_lim, heegner)
            if x == 1:
               todo[i] = False
-      cur_lim += 1
+      init_second_lim += 1
 
-# a more manual version of compute_sides
+# a simpler version of compute_sides that only tries one value of second_lim
 def compute_sides_lim(lo, hi, lim=12, heegner = True):
     for i in range(lo, hi+1):
         if (squarefree(i) == 1):
