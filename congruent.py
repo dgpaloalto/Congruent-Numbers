@@ -2,13 +2,15 @@
 
 import re
 
+def is_congruent(i):
+   return i%8 in [5,6,7] or ((i%2 == 1) and odd(i)) or ((i%2 == 0) and even(i))
+
 # print the sides of congruent numbers from lo to hi, inclusive
 def compute_sides(lo, hi, init_second_lim = 12, heegner = True):
     todo = [False]*(hi+1)
     for i in range(lo, hi+1):
-        if (squarefree(i) == 1):
-            if  ((i%2 == 1) and odd(i)) or ((i%2 == 0) and even(i)):
-               todo[i] = True
+        if squarefree(i) == 1 and is_congruent(i):
+            todo[i] = True
 
     while sum(todo) > 0:
       print('*** second_lim=', init_second_lim, ' ', sum(todo), 'left to do', flush = True)
@@ -23,9 +25,8 @@ def compute_sides(lo, hi, init_second_lim = 12, heegner = True):
 # a simpler version of compute_sides that only tries one value of second_lim
 def compute_sides_lim(lo, hi, lim=12, heegner = True):
     for i in range(lo, hi+1):
-        if (squarefree(i) == 1):
-            if  ((i%2 == 1) and odd(i)) or ((i%2 == 0) and even(i)):
-                compute_sides_one(i, lim, heegner)
+        if squarefree(i) == 1 and is_congruent(i):
+            compute_sides_one(i, lim, heegner)
 
 # return 1 if n squarefree
 def squarefree(n):
@@ -108,9 +109,21 @@ def print_points1(s,t,u,v, N):
 # Get the side lengths alpha = a/d, beta = b/e, compute
 # the corresponding values of P,Q, write them as a square
 # times a factor of N,  and print them
+# use method of https://math.okstate.edu/people/pyan/CongruentNumbersAndEllipticCurves.pdf
 def print_points(s,t,u,v, N):  # pts x=s/t, y=u/v on elliptic curve
-   s1, t1, u1, v1 = double(s, t, u, v, N)
-   a, d, b, e = point_to_sides(s1, t1, N)
+
+   x = abs(s/t)
+   y = abs(u/v)
+   a = abs(x**2 - N**2)   # alpha = (x**2 - N**2)/y
+   b = 2*N*x              # beta = 2*N*x/y
+   g_a = gcd(a,y);
+   g_b = gcd(b, y);
+   a = a/g_a;
+   d = y/g_a;
+   b = b/g_b;
+   e = y/g_b;
+   if a/d > b/e:
+       a,d,b,e = b,e,a,d
    print (N, "   alpha=", a, "/", d)
    print ("      beta=", b, "/", e)
 
@@ -144,33 +157,6 @@ def print_points(s,t,u,v, N):  # pts x=s/t, y=u/v on elliptic curve
             j0 = j
             break
    print ("    P= ", i0, "*", P0, "^2, Q=", j0, "*", Q0, "^2", flush = True)
-
-# x=s/t, y=u/v is a point on y^2 = x^3 - N^2x.  Returns (x,y) + (x,y)
-def double(s,t,u,v, N):
-   num = -8*s*t**3*u*u + v*v*(3*s*s - t*t*N*N)**2
-   denom = 2*u*t*t
-   s1 = num
-   t1 = denom*denom
-   u1 = -2*u*u*t1*t**3 + v*v*(s*t1 - t*s1)*(3*s*s - t*t*N*N)
-   v1 = 2*u*v*t1*t**3
-   g1 = gcd(s1, t1)
-   g2 = gcd(u1, v1)
-   # return (s1/g1, t1/g1, u1/g2, v1/g2) # don't need last two elements
-   return (Integer(s1/g1), Integer(t1/g1),
-             Integer(u1/g2), Integer(v1/g2)) # don't need last two elements
-
-# Given (x,y) + (x,y) = (s/t, u/v), compute the corresponding alpha = a/d, beta = b/e
-def point_to_sides(s, t, N):
-   p1 = sqrt(s + t*N)  # sqrt(x+N)
-   p2 = sqrt(s - t*N)  # sqrt(x-N)
-
-   a = p1 - p2
-   d =  sqrt(t)
-   b = p1 + p2
-   e  = d
-   g1 = gcd(a, d)
-   g2 = gcd(b, e)
-   return(a/g1, d/g1, b/g2, e/g2)
 
 # test for n congruent when n is odd
 def odd(n):
@@ -212,3 +198,4 @@ def even(n):
            if 4*x*x + y*y + 8*z*z == n:
                cnt2 = cnt2 + 1
     return(2*cnt1 == cnt2)
+
